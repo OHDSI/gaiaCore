@@ -54,6 +54,7 @@
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/readFromZip.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/readStorageConfig.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/setSridWgs84.html</loc></url>
+<url><loc>https://ohdsi.github.io/gaiaCore/reference/setup_offline_storage.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/splitAddresses.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/standardizeStaged.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/writeDdl.html</loc></url>

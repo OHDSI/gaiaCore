@@ -92,9 +92,9 @@
 </h2>
 <p>Offline storage can be set up for the purpose of loading local datasets in gaiaDB and persisting downloaded source datasets.</p>
 <p>Offline storage is configured using a file <code>storage.yml</code> to specify a directory and whether or not to persist downloaded datasets.</p>
-<p>You can create this file using the helper function <code>setup_offline_storage()</code>:</p>
+<p>You can create this file using the helper function <code><a href="reference/setup_offline_storage.html">setup_offline_storage()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">setup_offline_storage</span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"/path/to/data"</span>, persist_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/setup_offline_storage.html">setup_offline_storage</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"/path/to/data"</span>, persist_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>The above command will create a file named <code>storage.yml</code> in your working directory. It will also create a directory <code>path/to/data</code> if one does not already exist. Any datasets downloaded using <code><a href="reference/loadGeometry.html">loadGeometry()</a></code> or <code><a href="reference/loadVariable.html">loadVariable()</a></code> will be saved to this directory!</p>
 </div>
 </div>
