@@ -1,0 +1,135 @@
+# gaiaCore Local Development Docker Compose
+#
+# NOTE: This docker-compose is for LOCAL DEVELOPMENT AND TESTING ONLY
+#
+# For production deployments, use the gaiaDocker repository which provides:
+# - Separate gaiaDB service (https://github.com/OHDSI/gaiaDB)
+# - Full GAIA stack orchestration
+# - PostgREST API integration
+# - Additional utility services (osgeo, postgis, git, gdsc)
+#
+# This local setup is useful for:
+# - Developing and testing connectors
+# - Quick local testing of database functions
+# - Connector examples demonstration
+#
+# After starting this stack, load test data with:
+#   ./scripts/init_gaiacore.sh
+#
+
+services:
+  gaiacore-db:
+    build: .
+    image: gaiacore:latest
+    container_name: gaiacore-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: gaiacore
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+#      - gaiacore-data:/var/lib/postgresql/data
+      - ./sql:/sql
+      - ./test/omop:/csv
+      - ./test/data_source:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gaiacore-network
+
+  gaiacore-api:
+    image: postgrest/postgrest:latest
+    container_name: gaiacore-postgrest
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgresql://postgres:postgres@gaiacore-db:5432/gaiacore
+      PGRST_DB_SCHEMAS: backbone,working
+      PGRST_DB_ANON_ROLE: postgres
+      PGRST_SERVER_PORT: 3000
+      PGRST_OPENAPI_MODE: follow-privileges
+      PGRST_DB_MAX_ROWS: 1000
+    depends_on:
+      gaiacore-db:
+        condition: service_healthy
+    networks:
+      - gaiacore-network
+
+  connector-python:
+    build: ./connectors/python
+    container_name: gaiacore-python-connector
+    profiles: ["connectors", "python"]
+    environment:
+      - API_URL=http://gaiacore-api:3000
+    depends_on:
+      gaiacore-api:
+        condition: service_started
+    networks:
+      - gaiacore-network
+    # command: python pipeline_example.py http://gaiacore-api:3000
+
+  connector-r:
+    build: ./connectors/r
+    container_name: gaiacore-r-connector
+    profiles: ["connectors", "r"]
+    environment:
+      - API_URL=http://gaiacore-api:3000
+    depends_on:
+      gaiacore-api:
+        condition: service_started
+    networks:
+      - gaiacore-network
+    # command: Rscript pipeline_example.R http://gaiacore-api:3000
+
+  connector-bash:
+    build: ./connectors/bash
+    container_name: gaiacore-bash-connector
+    profiles: ["connectors", "bash"]
+    environment:
+      - API_URL=http://gaiacore-api:3000
+    depends_on:
+      gaiacore-api:
+        condition: service_started
+    networks:
+      - gaiacore-network
+    # command: /app/pipeline_example.sh http://gaiacore-api:3000
+
+  connector-julia:
+    build: ./connectors/julia
+    container_name: gaiacore-julia-connector
+    profiles: ["connectors", "julia"]
+    environment:
+      - API_URL=http://gaiacore-api:3000
+    depends_on:
+      gaiacore-api:
+        condition: service_started
+    networks:
+      - gaiacore-network
+    # command: julia pipeline_example.jl http://gaiacore-api:3000
+
+  connector-java:
+    build: ./connectors/java
+    container_name: gaiacore-java-connector
+    profiles: ["connectors", "java"]
+    environment:
+      - API_URL=http://gaiacore-api:3000
+    depends_on:
+      gaiacore-api:
+        condition: service_started
+    networks:
+      - gaiacore-network
+    # command: mvn exec:java -Dexec.mainClass=PipelineExample -Dexec.args="http://gaiacore-api:3000"
+
+
+#volumes:
+#  gaiacore-data:
+#    driver: local
+
+networks:
+  gaiacore-network:
+    driver: bridge
