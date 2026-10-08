@@ -22,7 +22,7 @@ test_that("spatialJoin rejects operators that are not on the list", {
 })
 
 test_that("connection details are created for PostgreSQL", {
-  details <- createGaiaConnectionDetails(server = "localhost/gaiacore", port = 5433, password = "x", pathToDriver = "")
+  details <- createGaiaConnectionDetails(server = "localhost/gaiacore", port = 5433, password = "x", pathToDriver = tempdir())
   expect_equal(details$dbms, "postgresql")
   expect_equal(details$server(), "localhost/gaiacore")
 })
