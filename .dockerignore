@@ -1,0 +1,6 @@
+.git
+.github
+.idea
+docs
+*.Rcheck
+*.tar.gz

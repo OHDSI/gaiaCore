@@ -1,0 +1,16 @@
+url: https://ohdsi.github.io/gaiaCore/
+template:
+  bootstrap: 5
+reference:
+  - title: Connect
+    contents: [createGaiaConnectionDetails, connectGaia, disconnectGaia]
+  - title: Catalog and ingestion
+    contents: [ingestDatasource, loadVariables, listDatasources, listVariables]
+  - title: Locations
+    contents: [loadLocationsFromOmop, loadLocations, validateLocations]
+  - title: Exposure
+    contents: [spatialJoin, spatialJoinAll, summarizeExposure, getExposure, clearExposure, copyExposureToOmop]
+  - title: Quality
+    contents: [checkExposure]
+  - title: Analytics
+    contents: [dayWeightedExposure, fitExposureEffect]

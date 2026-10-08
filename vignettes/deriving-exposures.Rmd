@@ -1,0 +1,89 @@
+---
+title: "Deriving exposures with gaiaCore"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Deriving exposures with gaiaCore}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE, comment = "#>")
+```
+
+This vignette follows the Gaia pipeline from a catalog entry to exposure rows in an OMOP CDM. It needs a running gaiaDB
+(see [gaiaDocker](https://github.com/OHDSI/gaiaDocker)), so the code is shown but not run.
+
+## 1. Connect
+
+```{r}
+library(gaiaCore)
+connectionDetails <- createGaiaConnectionDetails(server = "gaia-db/gaiacore", password = Sys.getenv("GAIA_POSTGRES_PASSWORD"))
+connection <- connectGaia(connectionDetails)
+```
+
+## 2. Ingest the sources
+
+A dataset is ingested from its gaiaCatalog entry: its metadata is registered, the data are downloaded and loaded into PostGIS, and the
+geometry is cleaned. Ingest boundaries before datasets that are joined to them.
+
+```{r}
+ingestDatasource(connection, "us_2023_county_tl")
+ingestDatasource(connection, "us_2014_2019_monthly_pm25_by_county_cdc")
+listDatasources(connection)
+listVariables(connection)
+```
+
+`loadVariables()` then builds the geometry and attribute tables of every variable of a dataset. The county PM2.5 dataset has four
+variables (maximum, median, mean, population-weighted mean); the next step joins only the one you choose.
+
+```{r}
+loadVariables(connection, "us_2014_2019_monthly_pm25_by_county_cdc", geomLabel = "name", variableNodata = -999)
+```
+
+## 3. Locations
+
+Locations come from an OMOP CDM with the Gaia extension tables or from data frames.
+
+```{r}
+loadLocationsFromOmop(connection, cdmSchema = "omopgis")
+# or
+loadLocations(connection, location, locationHistory)
+validateLocations(connection)
+```
+
+## 4. The spatial-temporal join
+
+```{r}
+spatialJoin(connection, "pm25_mean_pred", "us_2014_2019_monthly_pm25_by_county_cdc",
+            spatialOperator = "ST_Within", exposureTypeConceptId = 2052499878)
+summarizeExposure(connection)
+```
+
+A person who moves in the middle of a month has two partial-month rows for that month: the monthly value is clipped to each residence interval.
+
+## 5. Check and copy into the CDM
+
+```{r}
+checkExposure(connection, expectedUnit = NULL, valueRange = c(0, 200))
+copyExposureToOmop(connection, cdmSchema = "omopgis")
+```
+
+## 6. Analyse
+
+Exposure over a window that does not line up with the monthly rows, such as a pregnancy:
+
+```{r}
+exposure <- getExposure(connection, conceptId = 2052499839)
+dayWeightedExposure(exposure, windows)
+```
+
+An exposure effect with a confidence interval that holds up with few, unbalanced clusters:
+
+```{r}
+fitExposureEffect(copd ~ pm25 + ses + age + female, data, exposure = "pm25", cluster = "county")
+```
+
+```{r}
+disconnectGaia(connection)
+```

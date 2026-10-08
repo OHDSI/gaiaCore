@@ -1,0 +1,35 @@
+Package: gaiaCore
+Type: Package
+Title: Derive Place-Based Exposures from a Gaia Database in R
+Version: 0.1.0
+Authors@R: c(
+    person("Jared", "Houghtaling", email = "houghtaling@ohdsi.org", role = c("aut", "cre")),
+    person("OHDSI GIS Working Group", role = "cph"))
+Description: R interface to a Gaia database (gaiaDB, PostgreSQL with PostGIS). It connects
+    directly to the database with DatabaseConnector and runs the Gaia pipeline from R: ingest
+    datasets registered in the Gaia catalog, load person locations and residence histories, join
+    them to geospatial sources in space and time to derive EXTERNAL_EXPOSURE rows, check the
+    result, and copy it into an OMOP CDM. It also provides exposure analytics: day-weighted
+    exposure over windows such as pregnancy, and confidence intervals for exposure effects that
+    stay valid with few, unbalanced geographic clusters.
+License: Apache License 2.0
+URL: https://github.com/OHDSI/gaiaCore, https://ohdsi.github.io/gaiaCore/
+BugReports: https://github.com/OHDSI/gaiaCore/issues
+Depends: R (>= 4.1.0)
+Imports:
+    DatabaseConnector (>= 6.0.0),
+    checkmate,
+    stats
+Suggests:
+    withr,
+    lme4,
+    sf,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    pkgdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
