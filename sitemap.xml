@@ -7,6 +7,7 @@
 <url><loc>https://ohdsi.github.io/gaiaCore/index.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/news/index.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/checkExposure.html</loc></url>
+<url><loc>https://ohdsi.github.io/gaiaCore/reference/checkStagedExposure.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/clearExposure.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/connectGaia.html</loc></url>
 <url><loc>https://ohdsi.github.io/gaiaCore/reference/copyExposureToOmop.html</loc></url>

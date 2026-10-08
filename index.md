@@ -138,7 +138,7 @@ mixed model instead.
 | Catalog and ingestion | [`ingestDatasource()`](https://ohdsi.github.io/gaiaCore/reference/ingestDatasource.md), [`loadVariables()`](https://ohdsi.github.io/gaiaCore/reference/loadVariables.md), [`listDatasources()`](https://ohdsi.github.io/gaiaCore/reference/listDatasources.md), [`listVariables()`](https://ohdsi.github.io/gaiaCore/reference/listVariables.md) |
 | Locations | [`loadLocationsFromOmop()`](https://ohdsi.github.io/gaiaCore/reference/loadLocationsFromOmop.md), [`loadLocations()`](https://ohdsi.github.io/gaiaCore/reference/loadLocations.md), [`validateLocations()`](https://ohdsi.github.io/gaiaCore/reference/validateLocations.md) |
 | Exposure | [`spatialJoin()`](https://ohdsi.github.io/gaiaCore/reference/spatialJoin.md), [`spatialJoinAll()`](https://ohdsi.github.io/gaiaCore/reference/spatialJoinAll.md), [`summarizeExposure()`](https://ohdsi.github.io/gaiaCore/reference/summarizeExposure.md), [`getExposure()`](https://ohdsi.github.io/gaiaCore/reference/getExposure.md), [`clearExposure()`](https://ohdsi.github.io/gaiaCore/reference/clearExposure.md), [`copyExposureToOmop()`](https://ohdsi.github.io/gaiaCore/reference/copyExposureToOmop.md) |
-| Quality | [`checkExposure()`](https://ohdsi.github.io/gaiaCore/reference/checkExposure.md) |
+| Quality | [`checkExposure()`](https://ohdsi.github.io/gaiaCore/reference/checkExposure.md), [`checkStagedExposure()`](https://ohdsi.github.io/gaiaCore/reference/checkStagedExposure.md) |
 | Analytics | [`dayWeightedExposure()`](https://ohdsi.github.io/gaiaCore/reference/dayWeightedExposure.md), [`fitExposureEffect()`](https://ohdsi.github.io/gaiaCore/reference/fitExposureEffect.md) |
 
 ## Connecting

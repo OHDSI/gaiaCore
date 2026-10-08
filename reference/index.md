@@ -48,6 +48,8 @@
 
 - [`checkExposure()`](https://ohdsi.github.io/gaiaCore/reference/checkExposure.md)
   : Quality checks on the derived exposure rows
+- [`checkStagedExposure()`](https://ohdsi.github.io/gaiaCore/reference/checkStagedExposure.md)
+  : Quality checks on staged exposure rows
 
 ## Analytics
 
