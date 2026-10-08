@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Functions for interacting with gaiaDB and the OHDSI GIS Gaia toolchain • gaiaCore</title>
+<title>Derive Place-Based Exposures from a Gaia Database in R • gaiaCore</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Functions for interacting with gaiaDB and the OHDSI GIS Gaia toolchain">
-<meta name="description" content="What the package does (one paragraph).">
-<meta property="og:description" content="What the package does (one paragraph).">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Derive Place-Based Exposures from a Gaia Database in R">
+<meta name="description" content="R interface to a Gaia database (gaiaDB, PostgreSQL with PostGIS). It connects directly to the database with DatabaseConnector and runs the Gaia pipeline from R: ingest datasets registered in the Gaia catalog, load person locations and residence histories, join them to geospatial sources in space and time to derive EXTERNAL_EXPOSURE rows, check the result, and copy it into an OMOP CDM. It also provides exposure analytics: day-weighted exposure over windows such as pregnancy, and confidence intervals for exposure effects that stay valid with few, unbalanced geographic clusters.">
+<meta property="og:description" content="R interface to a Gaia database (gaiaDB, PostgreSQL with PostGIS). It connects directly to the database with DatabaseConnector and runs the Gaia pipeline from R: ingest datasets registered in the Gaia catalog, load person locations and residence histories, join them to geospatial sources in space and time to derive EXTERNAL_EXPOSURE rows, check the result, and copy it into an OMOP CDM. It also provides exposure analytics: day-weighted exposure over windows such as pregnancy, and confidence intervals for exposure effects that stay valid with few, unbalanced geographic clusters.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -32,6 +32,12 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/deriving-exposures.html">Deriving exposures with gaiaCore</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -49,60 +55,189 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="gaiacore">gaiaCore<a class="anchor" aria-label="anchor" href="#gaiacore"></a>
 </h1></div>
-<div class="section level3">
-<h3 id="warning-this-package-is-under-development-and-has-only-been-tested-using-mock-data">WARNING: this package is under-development and has only been tested using mock data<a class="anchor" aria-label="anchor" href="#warning-this-package-is-under-development-and-has-only-been-tested-using-mock-data"></a>
-</h3>
+<!-- badges: start -->
+
+<p>gaiaCore is an R package for working with a <strong>Gaia</strong> database. It connects to gaiaDB (PostgreSQL with PostGIS) <strong>directly through <a href="https://ohdsi.github.io/DatabaseConnector/" class="external-link">DatabaseConnector</a></strong>, runs the Gaia pipeline from R, and provides the analytics that turn the result into evidence: linking place-based exposures (air pollution, deprivation, green space, anything with a geometry and a period) to the people in an OMOP CDM.</p>
+<p>With gaiaCore you can</p>
+<ul>
+<li>
+<strong>ingest</strong> datasets registered in the Gaia catalog and build their geometry and attribute tables,</li>
+<li>
+<strong>load person locations</strong> and residence histories (from data frames or from an OMOP CDM with the Gaia extension),</li>
+<li>
+<strong>derive exposure</strong> by joining locations to geospatial sources in space and time (<code>EXTERNAL_EXPOSURE</code> rows), one variable at a time,</li>
+<li>
+<strong>check</strong> the derived rows (duplicates, values outside the residence interval, missing or implausible values, unit mismatches),</li>
+<li>
+<strong>copy</strong> the result into the CDM, where HADES tools such as CohortMethod and FeatureExtraction can use it,</li>
+<li>
+<strong>analyse</strong> exposure: day-weighted exposure over windows such as a pregnancy, and effect estimates whose confidence intervals stay valid with few, unbalanced geographic clusters.</li>
+</ul>
+<p>All spatial processing happens inside gaiaDB; gaiaCore calls its SQL functions, so every derived value stays traceable to the catalog entry, the geometry and the residence interval that produced it.</p>
+<div class="section level2">
+<h2 id="where-gaiacore-fits">Where gaiaCore fits<a class="anchor" aria-label="anchor" href="#where-gaiacore-fits"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Repository</th>
+<th>Purpose</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/OHDSI/gaiaCatalog" class="external-link">gaiaCatalog</a></td>
+<td>Dataset definitions: metadata (JSON-LD) and the ETL scripts that load each dataset</td>
+</tr>
+<tr>
+<td><a href="https://github.com/OHDSI/gaiaDB" class="external-link">gaiaDB</a></td>
+<td>The database: PostGIS schema and the SQL functions for ingestion and the spatial-temporal join</td>
+</tr>
+<tr>
+<td><a href="https://github.com/OHDSI/gaiaDocker" class="external-link">gaiaDocker</a></td>
+<td>Docker deployment of the whole stack</td>
+</tr>
+<tr>
+<td>
+<strong>gaiaCore</strong> (this package)</td>
+<td>R interface to the database, quality checks and exposure analytics</td>
+</tr>
+</tbody>
+</table>
+<p>The Python, Java, Julia, Bash and PostgREST-based R clients that used to live in this repository are on the <a href="https://github.com/OHDSI/gaiaCore/tree/connectors" class="external-link"><code>connectors</code></a> branch (tag <code>connectors-v1</code>).</p>
 </div>
-</div>
-<div class="section level1">
-<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h1>
-<p>An R Package for interacting with gaiaDB - part of the OHDSI GIS <strong>Gaia</strong> toolchain</p>
-</div>
-<div class="section level1">
-<h1 id="get-started">Get Started<a class="anchor" aria-label="anchor" href="#get-started"></a>
-</h1>
-<p>Install the latest version of the package from GitHub:</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages('remotes')</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ohdsi/gaiaCore"</span><span class="op">)</span></span></code></pre></div>
-<p>Connect to gaiaDB:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"OHDSI/gaiaCore"</span><span class="op">)</span></span></code></pre></div>
+<p>DatabaseConnector needs Java and the PostgreSQL JDBC driver. Download the driver once with <code>DatabaseConnector::downloadJdbcDrivers("postgresql")</code> and point <code>DATABASECONNECTOR_JAR_FOLDER</code> at it.</p>
+<p><strong>Docker.</strong> The image <code>ohdsi/gaia-core</code> is <a href="https://ohdsi.github.io/Hades/" class="external-link">HADES</a> (RStudio, CohortMethod, FeatureExtraction, Capr) with gaiaCore, <a href="https://github.com/OHDSI/CaprForExtensions" class="external-link">CaprForExtensions</a>, <a href="https://github.com/OHDSI/FeatureExtractionForExtensions" class="external-link">FeatureExtractionForExtensions</a>, the JDBC driver and the spatial packages (sf and others) installed:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">docker</span> pull <span class="at">--platform</span> linux/amd64 ohdsi/gaia-core:main</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="at">--name</span> gaia-core <span class="at">--platform</span> linux/amd64 <span class="at">--network</span> gaiadocker_default <span class="at">-p</span> 8787:8787 <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">-e</span> USER=ohdsi <span class="at">-e</span> PASSWORD=<span class="op">&lt;</span>choose a password<span class="op">&gt;</span> ohdsi/gaia-core:main</span></code></pre></div>
+<p>Open <a href="http://localhost:8787" class="external-link uri">http://localhost:8787</a> and sign in as <code>ohdsi</code>. On the <code>gaiadocker_default</code> network the database is reachable as <code>gaia-db</code>, which is the package default; pass the database password to <code>createGaiaConnectionDetails(password = )</code> or set <code>GAIA_POSTGRES_PASSWORD</code> in <code>~/.Renviron</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+</h2>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/OHDSI/gaiaCore" class="external-link">gaiaCore</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">DatabaseConnector</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></span><span class="op">(</span></span>
-<span>  dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
-<span>  server <span class="op">=</span> <span class="st">"localhost/gaiaDB"</span>,</span>
-<span>  port <span class="op">=</span> <span class="fl">5432</span>,</span>
-<span>  user<span class="op">=</span><span class="st">"postgres"</span>,</span>
-<span>  password <span class="op">=</span> <span class="st">"mysecretpassword"</span><span class="op">)</span> </span></code></pre></div>
+<span><span class="va">connection</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/connectGaia.html">connectGaia</a></span><span class="op">(</span><span class="fu"><a href="reference/createGaiaConnectionDetails.html">createGaiaConnectionDetails</a></span><span class="op">(</span>server <span class="op">=</span> <span class="st">"gaia-db/gaiacore"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 1. Ingest the datasets (boundaries first) and build their geometry and attribute tables</span></span>
+<span><span class="fu"><a href="reference/ingestDatasource.html">ingestDatasource</a></span><span class="op">(</span><span class="va">connection</span>, <span class="st">"us_2023_county_tl"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ingestDatasource.html">ingestDatasource</a></span><span class="op">(</span><span class="va">connection</span>, <span class="st">"us_2014_2019_monthly_pm25_by_county_cdc"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/loadVariables.html">loadVariables</a></span><span class="op">(</span><span class="va">connection</span>, <span class="st">"us_2014_2019_monthly_pm25_by_county_cdc"</span>, geomLabel <span class="op">=</span> <span class="st">"name"</span>, variableNodata <span class="op">=</span> <span class="op">-</span><span class="fl">999</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 2. Load the persons' locations and residence history, and validate them</span></span>
+<span><span class="fu"><a href="reference/loadLocationsFromOmop.html">loadLocationsFromOmop</a></span><span class="op">(</span><span class="va">connection</span>, cdmSchema <span class="op">=</span> <span class="st">"omopgis"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/validateLocations.html">validateLocations</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 3. Join locations to one variable in space and time</span></span>
+<span><span class="fu"><a href="reference/spatialJoin.html">spatialJoin</a></span><span class="op">(</span><span class="va">connection</span>, <span class="st">"pm25_mean_pred"</span>, <span class="st">"us_2014_2019_monthly_pm25_by_county_cdc"</span>,</span>
+<span>            exposureTypeConceptId <span class="op">=</span> <span class="fl">2052499878</span><span class="op">)</span>   <span class="co"># Exposure Type Concept: Air Quality Database</span></span>
+<span></span>
+<span><span class="co"># 4. Check the result and copy it into the CDM</span></span>
+<span><span class="fu"><a href="reference/summarizeExposure.html">summarizeExposure</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/checkExposure.html">checkExposure</a></span><span class="op">(</span><span class="va">connection</span>, valueRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/copyExposureToOmop.html">copyExposureToOmop</a></span><span class="op">(</span><span class="va">connection</span>, cdmSchema <span class="op">=</span> <span class="st">"omopgis"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/disconnectGaia.html">disconnectGaia</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span></code></pre></div>
+<p>Each exposure row records where it came from: <code>exposure_source_value</code> is the <code>variable_source_id</code> of the variable (see <code><a href="reference/listVariables.html">listVariables()</a></code>), <code>exposure_relationship_source_value</code> the spatial operator, and <code>exposure_type_concept_id</code> the kind of data source you passed to <code><a href="reference/spatialJoin.html">spatialJoin()</a></code>.</p>
+<div class="section level3">
+<h3 id="analytics">Analytics<a class="anchor" aria-label="anchor" href="#analytics"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Mean exposure during a pregnancy: partial months at both ends count for the days they cover</span></span>
+<span><span class="va">exposure</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/getExposure.html">getExposure</a></span><span class="op">(</span><span class="va">connection</span>, conceptId <span class="op">=</span> <span class="fl">2052499839</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/dayWeightedExposure.html">dayWeightedExposure</a></span><span class="op">(</span><span class="va">exposure</span>, <span class="va">windows</span><span class="op">)</span>   <span class="co"># windows: person_id, window_start, window_end</span></span>
+<span></span>
+<span><span class="co"># Effect of exposure on an outcome, with a confidence interval that accounts for clustering by county</span></span>
+<span><span class="fu"><a href="reference/fitExposureEffect.html">fitExposureEffect</a></span><span class="op">(</span><span class="va">outcome</span> <span class="op">~</span> <span class="va">pm25</span> <span class="op">+</span> <span class="va">ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">female</span>, <span class="va">data</span>, exposure <span class="op">=</span> <span class="st">"pm25"</span>, cluster <span class="op">=</span> <span class="st">"county"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/fitExposureEffect.html">fitExposureEffect()</a></code> reports the log-odds per unit of exposure with a leave-one-cluster-out jackknife interval by default. In simulations of a tract-level benchmark with 175 unbalanced county clusters its 95% intervals covered the true value 95.8% of the time, against 90% for the usual clustered sandwich interval and 74% for model-based intervals; <code>interval = "glmm"</code> fits a mixed model instead.</p>
 </div>
-<div class="section level1">
-<h1 id="support">Support<a class="anchor" aria-label="anchor" href="#support"></a>
-</h1>
+</div>
+<div class="section level2">
+<h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Task</th>
+<th>Functions</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Connect</td>
+<td>
+<code><a href="reference/createGaiaConnectionDetails.html">createGaiaConnectionDetails()</a></code>, <code><a href="reference/connectGaia.html">connectGaia()</a></code>, <code><a href="reference/disconnectGaia.html">disconnectGaia()</a></code>
+</td>
+</tr>
+<tr>
+<td>Catalog and ingestion</td>
+<td>
+<code><a href="reference/ingestDatasource.html">ingestDatasource()</a></code>, <code><a href="reference/loadVariables.html">loadVariables()</a></code>, <code><a href="reference/listDatasources.html">listDatasources()</a></code>, <code><a href="reference/listVariables.html">listVariables()</a></code>
+</td>
+</tr>
+<tr>
+<td>Locations</td>
+<td>
+<code><a href="reference/loadLocationsFromOmop.html">loadLocationsFromOmop()</a></code>, <code><a href="reference/loadLocations.html">loadLocations()</a></code>, <code><a href="reference/validateLocations.html">validateLocations()</a></code>
+</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td>
+<code><a href="reference/spatialJoin.html">spatialJoin()</a></code>, <code><a href="reference/spatialJoinAll.html">spatialJoinAll()</a></code>, <code><a href="reference/summarizeExposure.html">summarizeExposure()</a></code>, <code><a href="reference/getExposure.html">getExposure()</a></code>, <code><a href="reference/clearExposure.html">clearExposure()</a></code>, <code><a href="reference/copyExposureToOmop.html">copyExposureToOmop()</a></code>
+</td>
+</tr>
+<tr>
+<td>Quality</td>
+<td><code><a href="reference/checkExposure.html">checkExposure()</a></code></td>
+</tr>
+<tr>
+<td>Analytics</td>
+<td>
+<code><a href="reference/dayWeightedExposure.html">dayWeightedExposure()</a></code>, <code><a href="reference/fitExposureEffect.html">fitExposureEffect()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="connecting">Connecting<a class="anchor" aria-label="anchor" href="#connecting"></a>
+</h2>
+<p>gaiaCore opens a JDBC connection with DatabaseConnector; there is no REST layer in between.</p>
 <ul>
-<li>Please use the <a href="https://github.com/OHDSI/gaiaCore/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen" class="external-link">GitHub issue tracker</a> for all bugs, issues, and feature requests</li>
+<li>From another container on the Gaia Docker network use the defaults (<code>server = "gaia-db/gaiacore"</code>, port 5432).</li>
+<li>From the host use the published port, for example <code>createGaiaConnectionDetails(server = "localhost/gaiacore", port = 5433)</code>.</li>
+<li>The password is read from the environment variable <code>GAIA_POSTGRES_PASSWORD</code> unless you pass it.</li>
 </ul>
 </div>
-<div class="section level1">
-<h1 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
-</h1>
 <div class="section level2">
-<h2 id="offline-storage">Offline Storage<a class="anchor" aria-label="anchor" href="#offline-storage"></a>
+<h2 id="getting-help">Getting help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
 </h2>
-<p>Offline storage can be set up for the purpose of loading local datasets in gaiaDB and persisting downloaded source datasets.</p>
-<p>Offline storage is configured using a file <code>storage.yml</code> to specify a directory and whether or not to persist downloaded datasets.</p>
-<p>You can create this file using the helper function <code><a href="reference/setup_offline_storage.html">setup_offline_storage()</a></code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/setup_offline_storage.html">setup_offline_storage</a></span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"/path/to/data"</span>, persist_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>The above command will create a file named <code>storage.yml</code> in your working directory. It will also create a directory <code>path/to/data</code> if one does not already exist. Any datasets downloaded using <code><a href="reference/loadGeometry.html">loadGeometry()</a></code> or <code><a href="reference/loadVariable.html">loadVariable()</a></code> will be saved to this directory!</p>
+<p>Please open an issue on the <a href="https://github.com/OHDSI/gaiaCore/issues" class="external-link">issue tracker</a> or ask on the <a href="https://forums.ohdsi.org" class="external-link">OHDSI forums</a> (GIS working group).</p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h2>
+<p>gaiaCore is licensed under Apache License 2.0.</p>
 </div>
 </div>
-
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/OHDSI/gaiaCore/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/OHDSI/gaiaCore/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -110,7 +245,7 @@
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
-<li><small>Apache License (&gt;= 2)</small></li>
+<li><small>Apache License 2.0</small></li>
 </ul>
 </div>
 
@@ -125,23 +260,29 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Kyle Zollo-Venecek <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-1615-590X" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Robert Miller <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-1787-2855" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Jared Houghtaling <br><small class="roles"> Author, maintainer </small>   </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/OHDSI/gaiaCore/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/OHDSI/gaiaCore/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="LICENSE.html"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Kyle Zollo-Venecek, Robert Miller.</p>
+  <p>Developed by Jared Houghtaling.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
