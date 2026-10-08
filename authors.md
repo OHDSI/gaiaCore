@@ -9,7 +9,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/OHDSI/gaiaCore/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/OHDSI/gaiaCore/blob/v1.0.0/DESCRIPTION)
 
 Houghtaling J (2026). *gaiaCore: Derive Place-Based Exposures from a
 Gaia Database in R*. R package version 0.1.0,
