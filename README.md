@@ -112,7 +112,7 @@ sandwich interval and 74% for model-based intervals; `interval = "glmm"` fits a 
 | Catalog and ingestion | `ingestDatasource()`, `loadVariables()`, `listDatasources()`, `listVariables()` |
 | Locations | `loadLocationsFromOmop()`, `loadLocations()`, `validateLocations()` |
 | Exposure | `spatialJoin()`, `spatialJoinAll()`, `summarizeExposure()`, `getExposure()`, `clearExposure()`, `copyExposureToOmop()` |
-| Quality | `checkExposure()` |
+| Quality | `checkExposure()`, `checkStagedExposure()` |
 | Analytics | `dayWeightedExposure()`, `fitExposureEffect()` |
 
 ## Connecting

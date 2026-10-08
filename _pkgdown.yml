@@ -11,6 +11,6 @@ reference:
   - title: Exposure
     contents: [spatialJoin, spatialJoinAll, summarizeExposure, getExposure, clearExposure, copyExposureToOmop]
   - title: Quality
-    contents: [checkExposure]
+    contents: [checkExposure, checkStagedExposure]
   - title: Analytics
     contents: [dayWeightedExposure, fitExposureEffect]

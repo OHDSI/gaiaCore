@@ -46,3 +46,61 @@ checkExposure <- function(connection, sourceValue = NULL, conceptId = NULL, valu
   attr(result, "ok") <- all(result$rows_flagged == 0)
   result
 }
+
+#' Quality checks on staged exposure rows
+#'
+#' Checks candidate exposure rows before they are loaded, against the exposure already derived and the loaded residence history.
+#'
+#' @param connection A connection from [connectGaia()].
+#' @param staged A data frame with `person_id`, `exposure_start_date`, `exposure_end_date` and `value_as_number`, and optionally
+#'   `location_id`, `exposure_concept_id` and `dose_unit_source_value`. Columns that are missing are not checked.
+#' @param valueRange Plausible range of `value_as_number`.
+#' @param expectedUnit Expected `dose_unit_source_value`, or `NULL` to skip that check.
+#'
+#' @return `staged` with logical columns `duplicate_row` (the same person, location, concept and interval is already in
+#'   `working.external_exposure`), `outside_residence` (the interval does not overlap any residence interval of the person),
+#'   `missing_value`, `implausible_value`, `unit_mismatch` and `reject` (any check failed).
+#' @examples
+#' \dontrun{
+#' checkStagedExposure(connection, staged, valueRange = c(0, 200), expectedUnit = "micrograms/cubic meter")
+#' }
+#' @export
+checkStagedExposure <- function(connection, staged, valueRange = c(0, Inf), expectedUnit = NULL) {
+  checkmate::assertDataFrame(staged, min.rows = 1)
+  checkmate::assertNames(names(staged), must.include = c("person_id", "exposure_start_date", "exposure_end_date", "value_as_number"),
+                         .var.name = "staged")
+  checkmate::assertNumeric(valueRange, len = 2, any.missing = FALSE)
+  checkmate::assertString(expectedUnit, null.ok = TRUE)
+  persons <- paste(unique(as.integer(staged$person_id)), collapse = ", ")
+  existing <- .query(connection, sprintf(paste(
+    "SELECT person_id, location_id, exposure_concept_id, exposure_start_date, exposure_end_date",
+    "FROM working.external_exposure WHERE person_id IN (%s)"), persons))
+  history <- .query(connection, sprintf(
+    "SELECT entity_id, start_date, end_date FROM working.location_history WHERE entity_id IN (%s)", persons))
+  .flagStaged(staged, existing, history, valueRange, expectedUnit)
+}
+
+.flagStaged <- function(staged, existing, history, valueRange, expectedUnit) {
+  key <- function(d) {
+    column <- function(name) if (name %in% names(d)) as.character(d[[name]]) else ""
+    paste(d$person_id, column("location_id"), column("exposure_concept_id"),
+          as.Date(d$exposure_start_date), as.Date(d$exposure_end_date))
+  }
+  staged$duplicate_row <- key(staged) %in% key(existing)
+  start <- as.Date(staged$exposure_start_date)
+  end <- as.Date(staged$exposure_end_date)
+  staged$outside_residence <- vapply(seq_len(nrow(staged)), function(i) {
+    own <- history$entity_id == staged$person_id[i]
+    !any(own & start[i] <= as.Date(history$end_date) & end[i] >= as.Date(history$start_date))
+  }, logical(1))
+  staged$missing_value <- is.na(staged$value_as_number)
+  staged$implausible_value <- !is.na(staged$value_as_number) &
+    (staged$value_as_number < valueRange[1] | staged$value_as_number > valueRange[2])
+  staged$unit_mismatch <- if (!is.null(expectedUnit) && "dose_unit_source_value" %in% names(staged)) {
+    !is.na(staged$dose_unit_source_value) & staged$dose_unit_source_value != expectedUnit
+  } else {
+    FALSE
+  }
+  staged$reject <- with(staged, duplicate_row | outside_residence | missing_value | implausible_value | unit_mismatch)
+  staged
+}
