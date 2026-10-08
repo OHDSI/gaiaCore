@@ -24,7 +24,7 @@ source("gaiacore_client.R")
 
 # Get API URL from command line or use default
 args <- commandArgs(trailingOnly = TRUE)
-api_url <- if (length(args) > 0) args[1] else "http://host.docker.internal:3000"
+api_url <- if (length(args) > 0) args[1] else "http://gaia-postgrest:3000"
 
 # Initialize client
 client <- GaiaCoreClient$new(api_url)

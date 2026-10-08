@@ -23,7 +23,7 @@ GaiaCoreClient <- R6::R6Class(
 
     #' @description Initialize the gaiaCore client
     #' @param base_url Base URL of the PostgREST API
-    initialize = function(base_url = "http://gaiacore-api:3000") {
+    initialize = function(base_url = "http://gaia-postgrest:3000") {
       self$base_url <- sub("/$", "", base_url)
     },
 
